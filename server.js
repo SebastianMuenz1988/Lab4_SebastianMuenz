@@ -25,6 +25,7 @@ app.use((req, res, next) => {
   next();
 });
 
+// Middleware for Identification
 app.use((req, res, next) => {
   if (currentKey == "") {
     res.redirect("/identify");
@@ -54,11 +55,11 @@ app.post("/LOGIN", async (req, res) => {
     return;
   }
 
-  username = req.body.username;
-  password = req.body.password;
+  // username = req.body.username;
+  // password = req.body.password;
 
   // Check if user is in DB
-  let dbUserData = await database.getUserData(username);
+  let dbUserData = await database.getUserData(req.body.username);
   console.log(dbUserData);
 
   if (typeof dbUserData === "undefined") {
@@ -140,6 +141,11 @@ app.post("/REGISTER", async (req, res) => {
 // Route 5 - app.get("/REGISTER")--> render register.ejs
 app.get("/REGISTER", (req, res) => {
   res.render("register.ejs");
+});
+
+// Route 6 - ADMIN
+app.get("/admin", (req, res) => {
+  res.render("admin.ejs");
 });
 
 // Server

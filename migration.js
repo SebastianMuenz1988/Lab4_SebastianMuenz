@@ -11,10 +11,31 @@ function init() {
     db.run("DROP TABLE IF EXISTS users"); //prevent from error if the table already exists
 
     db.run(`CREATE TABLE users (
+      userID TEXT PRIMARY KEY,
       username TEXT NOT NULL,
+      role TEXT NOT NULL,
       password TEXT NOT NULL
       )`);
     // db.close() //
+
+    let users = [
+      ["id1", "User1", "student", "password"],
+      ["id2", "User2", "student", "password2"],
+      ["id3", "User3", "teacher", "password3"],
+      ["admin", "Admin", "admin", "admin"],
+    ];
+
+    let sql = `INSERT INTO users (userID, name, role, password) VALUES (?, ?, ?, ?)`;
+
+    users.forEach((user) => {
+      db.run(sql, user, (err) => {
+        if (err) {
+          return console.error(err.message);
+        }
+      });
+    });
+
+    db.close();
   });
 }
 
