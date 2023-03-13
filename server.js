@@ -14,7 +14,7 @@ const app = express(); // assing const app to express() method
 const port = 5000;
 
 let currentJWT = "";
-let currentUser = "";
+let currentRole = "";
 
 app.set("view-engine"); // view templates
 app.set("ejs"); // view templates
@@ -30,7 +30,8 @@ app.use((req, res, next) => {
 
 // Middleware function for identification
 function authenticateUser(req, res, next) {
-  if (currentJWT == "" && (currentUser == "student" || currentUser == "admin")) {
+  if (currentJWT == "" || !(currentRole !== "student" || currentRole !== "admin")) {
+    console.log("No access to this page with current role: ", currentRole);
     res.redirect("/identify");
   } else if (jwt.verify(currentJWT, process.env.TOKEN)) {
     next();
@@ -40,7 +41,8 @@ function authenticateUser(req, res, next) {
 }
 
 function authenticateAdmin(req, res, next) {
-  if (currentJWT == "") {
+  if (currentJWT == "" || currentRole !== "admin") {
+    console.log("No access to this page with current role: ", currentRole);
     res.redirect("/identify");
   } else if (jwt.verify(currentJWT, process.env.TOKEN)) {
     next();
@@ -65,7 +67,7 @@ app.get("/granted", authenticateUser, (req, res) => {
   res.render("start.ejs");
 });
 
-app.get("/admin", authenticateUser, (req, res) => {
+app.get("/admin", authenticateAdmin, (req, res) => {
   res.render("admin.ejs");
 });
 
@@ -88,6 +90,9 @@ app.post("/identify", async (req, res) => {
     return;
   }
 
+  // Get user role
+  let role = dbUserObject.role;
+
   // Check compare with encrypted password from DB
   try {
     if (await bcrypt.compare(password, dbUserObject.password)) {
@@ -104,8 +109,9 @@ app.post("/identify", async (req, res) => {
       // create JWT and save it to global variables for middleware check
       const JWT = jwt.sign(payload, secret, options);
       console.log("Your JWT: ", JWT);
+      console.log("Your Role: ", role);
       currentJWT = JWT;
-      currentUser = username;
+      currentRole = role;
       res.redirect("/granted"); // the enpoint grandet has a JWT check middleware
     } else {
       console.log("Wrong password!");
