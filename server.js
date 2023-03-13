@@ -13,6 +13,9 @@ const { isValidUserObject, isValidPassword } = require("./validation");
 const app = express(); // assing const app to express() method
 const port = 5000;
 
+let currentJWT = "";
+let currentUser = "";
+
 app.set("view-engine"); // view templates
 app.set("ejs"); // view templates
 
@@ -25,128 +28,136 @@ app.use((req, res, next) => {
   next();
 });
 
-// Middleware for Identification
-app.use((req, res, next) => {
-  if (currentKey == "") {
+// Middleware function for identification
+function authenticateUser(req, res, next) {
+  if (currentJWT == "" && (currentUser == "student" || currentUser == "admin")) {
     res.redirect("/identify");
-  } else if (jwt.verify(currentKey, process.env.TOKEN)) {
+  } else if (jwt.verify(currentJWT, process.env.TOKEN)) {
     next();
   } else {
-    res.redirect("/identify");
+    res.sendStatus(401);
   }
-});
+}
+
+function authenticateAdmin(req, res, next) {
+  if (currentJWT == "") {
+    res.redirect("/identify");
+  } else if (jwt.verify(currentJWT, process.env.TOKEN)) {
+    next();
+  } else {
+    res.sendStatus(401);
+  }
+}
 
 app.use(express.urlencoded({ extended: false })); //only accept key-value pairs with string values
 
-// Route 1 - app.get("/")--> only redirect to "/LOGIN"
+// Routes
 app.get("/", (req, res) => {
   req.method = "GET";
-  res.redirect("/LOGIN");
+  res.redirect("/identify");
 });
 
-// Route 2 - app.post("LOGIN")--> login post (triggered from login.ejs form)
-app.post("/LOGIN", async (req, res) => {
-  console.log("Login_req.body: ", req.body);
+app.get("/identify", (req, res) => {
+  res.render("identify.ejs");
+});
 
-  // Check if data valid
-  if (!isValidUserObject(req.body)) {
-    console.log("Bad user input!");
-    res.sendStatus(400);
-    return;
-  }
+app.get("/granted", authenticateUser, (req, res) => {
+  res.render("start.ejs");
+});
 
-  // username = req.body.username;
-  // password = req.body.password;
+app.get("/admin", authenticateUser, (req, res) => {
+  res.render("admin.ejs");
+});
+
+app.post("/identify", async (req, res) => {
+  // // Check if data valid
+  // if (!isValidUserObject(req.body)) {
+  //   console.log("Bad user input!");
+  //   res.sendStatus(400);
+  //   return;
+  // }
+
+  const username = req.body.user;
+  const password = req.body.password;
 
   // Check if user is in DB
-  let dbUserData = await database.getUserData(req.body.username);
-  console.log(dbUserData);
-
-  if (typeof dbUserData === "undefined") {
+  let dbUserObject = await database.getUserData(username);
+  if (typeof dbUserObject === "undefined") {
     console.log("User is not registered!");
-    res.redirect("/LOGIN");
+    res.redirect("/identify");
     return;
   }
 
   // Check compare with encrypted password from DB
   try {
-    if (await bcrypt.compare(req.body.password, dbUserData.password)) {
+    if (await bcrypt.compare(password, dbUserObject.password)) {
       const payload = {
-        user: req.body.username,
+        user: username,
         iat: Math.floor(Date.now() / 1000),
       };
+
       const secret = process.env.TOKEN;
       let options = {
         expiresIn: "1h",
       };
 
-      const token = jwt.sign(payload, secret, options);
-      console.log("Your JWT: ", token);
-      res.render("start.ejs");
+      // create JWT and save it to global variables for middleware check
+      const JWT = jwt.sign(payload, secret, options);
+      console.log("Your JWT: ", JWT);
+      currentJWT = JWT;
+      currentUser = username;
+      res.redirect("/granted"); // the enpoint grandet has a JWT check middleware
     } else {
       console.log("Wrong password!");
-      res.render("fail.ejs");
+      res.redirect("/identify");
     }
   } catch (error) {
     console.log("error compare: ", error);
   }
-
-  // If match --> create JASON Web Token + print it to console
 });
 
-// Route 3 - app.get("/LOGIN") --> only render login.ejs
-app.get("/LOGIN", (req, res) => {
-  res.render("login.ejs");
-});
-
-// Route 4 - app.post(“/REGISTER”) --> save user data in db (password encrypted)
-app.post("/REGISTER", async (req, res) => {
-  const { username, password } = req.body; //Destructuring the req.body
-  // Check user data
-  if (!isValidUserObject(req.body)) {
-    console.log("Bad user input!");
-    res.sendStatus(400);
-    return;
-  }
-
-  if (!isValidPassword(password)) {
-    res.sendStatus(400);
-    return;
-  }
-
-  if (!database.userExists(username)) {
-    console.log("User already exists!");
-    res.sendStatus(400);
-    return;
-  }
-
-  // Encryption of user password
-  let passwordEncrypted;
-  try {
-    passwordEncrypted = await bcrypt.hash(req.body.password, 10); // encryption
-    console.log("passwordEncrypted: ", passwordEncrypted); // log encrypted password
-  } catch (error) {
-    console.log("Could not encrypt user password: ", error);
-  }
-
-  // Save new User in DB
-  await database.addUser(username, passwordEncrypted);
-  //res.sendStatus(201); //.send("new user registered!");
-
-  // After registering --> Redirect to \login
-  req.method = "GET";
-  res.redirect("/LOGIN");
-});
-
-// Route 5 - app.get("/REGISTER")--> render register.ejs
-app.get("/REGISTER", (req, res) => {
-  res.render("register.ejs");
-});
-
-// Route 6 - ADMIN
-app.get("/admin", (req, res) => {
-  res.render("admin.ejs");
-});
-
-// Server
 app.listen(port, () => console.log(`Server is listening on port ${port}`));
+
+// // Route 4 - app.post(“/REGISTER”) --> save user data in db (password encrypted)
+// app.post("/REGISTER", async (req, res) => {
+//   const { username, password } = req.body; //Destructuring the req.body
+//   // Check user data
+//   if (!isValidUserObject(req.body)) {
+//     console.log("Bad user input!");
+//     res.sendStatus(400);
+//     return;
+//   }
+
+//   if (!isValidPassword(password)) {
+//     res.sendStatus(400);
+//     return;
+//   }
+
+//   if (!database.userExists(username)) {
+//     console.log("User already exists!");
+//     res.sendStatus(400);
+//     return;
+//   }
+
+//   // Encryption of user password
+//   let passwordEncrypted;
+//   try {
+//     passwordEncrypted = await bcrypt.hash(req.body.password, 10); // encryption
+//     console.log("passwordEncrypted: ", passwordEncrypted); // log encrypted password
+//   } catch (error) {
+//     console.log("Could not encrypt user password: ", error);
+//   }
+
+//   // Save new User in DB
+//   await database.addUser(username, passwordEncrypted);
+//   //res.sendStatus(201); //.send("new user registered!");
+
+//   // After registering --> Redirect to \login
+//   req.method = "GET";
+//   res.redirect("/LOGIN");
+// });
+
+// // Route 5 - app.get("/REGISTER")--> render register.ejs
+// app.get("/REGISTER", (req, res) => {
+//   res.render("register.ejs");
+// });

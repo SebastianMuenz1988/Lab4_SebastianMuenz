@@ -5,28 +5,20 @@ const db = new sqlite3.Database("./users.db"); //
 // get([param, ...] [, callback]) - returns single object or "undefined"
 async function getUserData(username) {
   return new Promise((resolve, reject) => {
-    db.get(
-      `SELECT * FROM users WHERE username = $username `,
-      { $username: username },
-      (error, rows) => {
-        if (error) reject(error);
-        else resolve(rows);
-      }
-    );
+    db.get(`SELECT * FROM users WHERE name = $username `, { $username: username }, (error, rows) => {
+      if (error) reject(error);
+      else resolve(rows);
+    });
   });
 }
 
 // all([param, ...] [, callback]) - returns an array of objects
 async function userExists(username) {
   return new Promise((resolve, reject) => {
-    db.all(
-      `SELECT * FROM users WHERE username = $username `,
-      { $username: username },
-      (error, rows) => {
-        if (error) reject(error);
-        else resolve(rows.length > 0);
-      }
-    );
+    db.all(`SELECT * FROM users WHERE username = $name `, { $name: username }, (error, rows) => {
+      if (error) reject(error);
+      else resolve(rows.length > 0);
+    });
   });
 }
 
@@ -42,7 +34,6 @@ async function addUser(username, passwordEncrypted) {
     });
   });
 }
-
 
 module.exports = {
   getUserData,
