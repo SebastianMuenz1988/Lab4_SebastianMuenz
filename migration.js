@@ -12,7 +12,7 @@ function init() {
 
     db.run(
       `CREATE TABLE users (
-      userID TEXT PRIMARY KEY,
+      userID TEXT PRIMARY KEY UNIQUE,
       name TEXT NOT NULL,
       role TEXT NOT NULL,
       password TEXT NOT NULL
@@ -23,9 +23,9 @@ function init() {
     );
 
     let users = [
-      ["id1", "User1", "student", "$2a$10$QQgzBmimtosOT2.ZwFKQu.5VTFfHEn3zBEVzoXQCB8/xKDsaMDLT."],
-      ["id2", "User2", "student", "$2a$10$kMHqFoolLodzghDfHFjZSuX48WW1twQ8bRFM8NBCz4PbyQjU/O5ba"],
-      ["id3", "User3", "teacher", "$2a$10$7N9vs2ZTfVBwC8HvMetaWO/7PNQgY2lG8kKRgoVGnHZkfZ2U9qunG"],
+      ["id1", "User1", "student1", "$2a$10$QQgzBmimtosOT2.ZwFKQu.5VTFfHEn3zBEVzoXQCB8/xKDsaMDLT."],
+      ["id2", "User2", "student2", "$2a$10$NR/5Wib84h2OdHgTSXtYDeK2HhF8Du.xC93hkqSbWpsbfGysWMaxe"],
+      ["id3", "User3", "teacher", "$2a$10$btMoexYklpxHnmhHoo2Wg.dr2ATSIfyI/0wz6O4IZNv5RPuJ1uGTy"],
       ["admin", "Admin", "admin", "$2a$10$2UfEEeOVEYe1ge6uetu0lewOMwPl3vDMfS1uFvFDSg1kya8QHXXDS"],
     ];
 

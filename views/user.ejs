@@ -1,17 +1,12 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8" />
-    <title>Admin</title>
+    <title>User Proflie - <%= user.name %></title>
   </head>
   <body>
-    <h1>Welcome Admin!</h1>
-    <h1>List of Users</h1>
-    <ul>
-      <% users.forEach(function(user) { %>
-      <li><%= user.userID %> - <%= user.name %> - <%= user.role %> - <%= user.password %></li>
-      <% }); %>
-    </ul>
+    <h1>Hello <%= user.role %> with the Name <%= user.name %>!</h1>
+    <p>This is your profile apge!</p>
+
     <h2>Some Links:</h2>
     <ul>
       <li>

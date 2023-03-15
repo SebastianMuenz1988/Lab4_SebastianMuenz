@@ -4,7 +4,7 @@ function isValidUserObject(userObject) {
     return false;
   }
 
-  if (!isNonEmptyString(userObject.username)) {
+  if (!isNonEmptyString(userObject.name)) {
     console.log("Username is missing!");
     return false;
   }
