@@ -21,7 +21,7 @@ After successfully login:
 
 - If you logged in as admin you can access every page (also the profile pages)
 
-- If you are logged in as "student1" or "student2" you will be redirected to the corresponding "role-page". As teacher you can also access the teacher "role-page" with the corresponding links below in the profile page or manually with URL (https://localhost:5000/teacher).
+- If you are logged in as (role)"student1" or "student2" you will be redirected directly to the corresponding "role-page". As (role) "teacher" or "student" you will be directly redirected to you personal profile page but you can also access the corresponding "role-page" with links below in the profile page or manually with URL (https://localhost:5000/teacher resp. student). Note that teacher can also access the students "role-page" but not the idividual students profile page.
 
 Register:
 You can register as teacher or student. You also need a username that is not already used and a valid password (capital and lowercase letters, digts, special character and min 8 characters).
