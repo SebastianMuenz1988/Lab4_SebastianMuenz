@@ -1,33 +1,47 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8" />
-    <title>Admin</title>
+    <title>Admin Page</title>
   </head>
   <body>
-    <h1>Welcome Admin!</h1>
-    <h1>List of Users</h1>
-    <ul>
-      <% users.forEach(function(user) { %>
-      <li><%= user.userID %> - <%= user.name %> - <%= user.role %> - <%= user.password %></li>
-      <% }); %>
-    </ul>
+    <h1>Admin Page</h1>
+    <table>
+      <thead>
+        <tr>
+          <th>User ID</th>
+          <th>Name</th>
+          <th>Role</th>
+          <th>Password</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% users.forEach(function(user) { %>
+        <tr>
+          <td><%= user.userID %></td>
+          <td><%= user.name %></td>
+          <td><%= user.role %></td>
+          <td><%= user.password %></td>
+        </tr>
+        <% }); %>
+      </tbody>
+    </table>
+
     <h2>Some Links:</h2>
     <ul>
       <li>
         <a href="/admin" target="_self">Link is only for Admin!</a>
       </li>
       <li>
-        <a href="/student1" target="_self">Student1s Role Page - Link is only for role Student1 and Teacher (and Admin)!</a>
+        <a href="/student1" target="_self">Student1s Home Page - Link is only for role Student1 and Teacher (and Admin)!</a>
       </li>
       <li>
-        <a href="/student2" target="_self">Student2s Role Page - Link is only for role Student2 and Teacher (and Admin)!</a>
+        <a href="/student2" target="_self">Student2s Home Page - Link is only for role Student2 and Teacher (and Admin)!</a>
       </li>
       <li>
-        <a href="/student" target="_self">Students Role Page - Link is only for role Students and Teachers (and Admin)!</a>
+        <a href="/student" target="_self">Students Home Page - Link is only for role Students and Teachers (and Admin)!</a>
       </li>
       <li>
-        <a href="/teacher" target="_self">Teachers Role Page - Link is only for role Teacher (and Admin)!</a>
+        <a href="/teacher" target="_self">Teachers Home Page - Link is only for role Teacher (and Admin)!</a>
       </li>
     </ul>
 
