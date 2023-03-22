@@ -7,13 +7,14 @@ dotenv.config();
 const database = require("./database");
 const migration = require("./migration");
 migration.init();
+const cookieParser = require("cookie-parser");
 
 const { isValidUserObject, isValidPassword } = require("./validation");
 
 const app = express(); // assing const app to express() method
 const port = 5000;
 
-let currentJWT = "";
+// let currentJWT = "";
 let currentRole = "";
 let currentID = "";
 
@@ -22,19 +23,19 @@ app.set("ejs"); // view templates
 
 // Middleware
 app.use(express.json());
-
+app.use(cookieParser());
 // Middleware for checking requests
 app.use((req, res, next) => {
-  console.log(`req.method: ${req.method}  req url: ${req.url}  req body: `, req.body);
+  console.log(`req.method: ${req.method}  req url: ${req.url}  req cookie: ${req.cookies} req body: `, req.body);
   next();
 });
 
 // Middleware function for identification
 function authenticateUser(req, res, next) {
-  if (currentJWT == "") {
+  if (req.cookies.jwt == "") {
     console.log("Unauthorized - No acces with this role: ", currentRole);
     res.status(401).redirect("/identify");
-  } else if (jwt.verify(currentJWT, process.env.TOKEN)) {
+  } else if (checkJWT(req.cookies.jwt)) {
     next();
   } else {
     res.status(401).redirect("/identify");
@@ -42,10 +43,10 @@ function authenticateUser(req, res, next) {
 }
 
 function authenticateStudent1(req, res, next) {
-  if (currentJWT == "" || (currentRole !== "student1" && currentRole !== "teacher" && currentRole !== "admin")) {
+  if (req.cookies.jwt == "" || (currentRole !== "student1" && currentRole !== "teacher" && currentRole !== "admin")) {
     console.log("Unauthorized - No acces with this role: ", currentRole);
     res.status(401).redirect("/identify");
-  } else if (jwt.verify(currentJWT, process.env.TOKEN)) {
+  } else if (checkJWT(req.cookies.jwt)) {
     next();
   } else {
     res.status(401).redirect("/identify");
@@ -53,10 +54,10 @@ function authenticateStudent1(req, res, next) {
 }
 
 function authenticateStudent2(req, res, next) {
-  if (currentJWT == "" || (currentRole !== "student2" && currentRole !== "teacher" && currentRole !== "admin")) {
+  if (req.cookies.jwt == "" || (currentRole !== "student2" && currentRole !== "teacher" && currentRole !== "admin")) {
     console.log("Unauthorized - No acces with this role: ", currentRole);
     res.status(401).redirect("/identify");
-  } else if (jwt.verify(currentJWT, process.env.TOKEN)) {
+  } else if (checkJWT(req.cookies.jwt)) {
     next();
   } else {
     res.status(401).redirect("/identify");
@@ -64,10 +65,10 @@ function authenticateStudent2(req, res, next) {
 }
 
 function authenticateStudent(req, res, next) {
-  if (currentJWT == "" || (currentRole !== "student" && currentRole !== "teacher" && currentRole !== "admin")) {
+  if (req.cookies.jwt == "" || (currentRole !== "student" && currentRole !== "teacher" && currentRole !== "admin")) {
     console.log("Unauthorized - No acces with this role: ", currentRole);
     res.status(401).redirect("/identify");
-  } else if (jwt.verify(currentJWT, process.env.TOKEN)) {
+  } else if (checkJWT(req.cookies.jwt)) {
     next();
   } else {
     res.status(401).redirect("/identify");
@@ -75,10 +76,10 @@ function authenticateStudent(req, res, next) {
 }
 
 function authenticateTeacher(req, res, next) {
-  if (currentJWT == "" || (currentRole !== "teacher" && currentRole !== "admin")) {
+  if (req.cookies.jwt == "" || (currentRole !== "teacher" && currentRole !== "admin")) {
     console.log("Unauthorized - No acces with this role: ", currentRole);
     res.status(401).redirect("/identify");
-  } else if (jwt.verify(currentJWT, process.env.TOKEN)) {
+  } else if (checkJWT(req.cookies.jwt)) {
     next();
   } else {
     res.status(401).redirect("/identify");
@@ -86,16 +87,11 @@ function authenticateTeacher(req, res, next) {
 }
 
 function authenticateAdmin(req, res, next) {
-  if (currentJWT == "" || currentRole !== "admin") {
+  if (req.cookies.jwt == "" || currentRole !== "admin") {
     console.log("Unauthorized - No acces with this role: ", currentRole);
     res.status(401).redirect("/identify");
-  } else if (currentJWT) {
-    try {
-      jwt.verify(currentJWT, process.env.TOKEN);
-      next();
-    } catch (error) {
-      res.status(401).redirect("/identify");
-    }
+  } else if (checkJWT(req.cookies.jwt)) {
+    next();
   } else {
     console.log("Unauthorized - No acces with this role: ", currentRole);
     res.status(401).redirect("/identify");
@@ -103,13 +99,27 @@ function authenticateAdmin(req, res, next) {
 }
 
 function authenticateUsers(req, res, next) {
-  if (currentJWT == "" || (currentID !== req.params.userID && currentRole !== "admin")) {
+  console.log("req.cookies", req.cookies);
+  if (req.cookies.jwt == "" || (currentID !== req.params.userID && currentRole !== "admin")) {
     console.log("Unorotrized! Your current ID does not match the requestesd Profile Page!");
     res.status(401).redirect("/identify");
-  } else if (jwt.verify(currentJWT, process.env.TOKEN)) {
+  } else if (checkJWT(req.cookies.jwt)) {
+    console.log("userAuthentivication successful!");
     next();
   } else {
     res.status(401).redirect("/identify");
+  }
+}
+
+function checkJWT(JWT) {
+  try {
+    const decryptedToken = jwt.verify(JWT, process.env.TOKEN);
+    console.log("JWT: ", JWT);
+    console.log("decryptedToken: ", decryptedToken);
+    return decryptedToken;
+  } catch (error) {
+    console.log(error);
+    return false;
   }
 }
 
@@ -142,7 +152,7 @@ app.get("/granted", authenticateUser, (req, res) => {
   if (currentRole === "admin") res.redirect("/admin");
   if (currentRole === "student1" || currentRole === "student2") res.redirect("/" + currentRole);
   if (currentRole === "student" || currentRole === "teacher") res.redirect("/users/" + currentID); // the enpoint grandet has a JWT check middleware
-  else res.redirect("start.ejs");
+  // else res.redirect("start.ejs");
 });
 
 // GET users
@@ -206,9 +216,16 @@ app.post("/identify", async (req, res) => {
 
       // create JWT and save it to global variables for middleware check
       const JWT = jwt.sign(payload, secret, options);
+
+      const cookieOptions = {
+        httpOnly: true, // Set cookie to httpOnly it can only be accessed by the server and not by client-side scripts.
+        maxAge: 86400000, // Set cookie to expire after 1 day (in milliseconds)
+      };
+      res.cookie("jwt", JWT, cookieOptions); // Send JWT in a cookie
+
       console.log("Your JWT: ", JWT);
       console.log("Your currentRole: ", currentRole);
-      currentJWT = JWT;
+      // currentJWT = JWT;
       res.redirect("/granted");
     } else {
       console.log("Wrong password!");
